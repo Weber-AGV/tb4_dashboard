@@ -1,0 +1,11 @@
+<MainWidget>:
+    BoxLayout:
+        orientation: 'vertical'
+        MDLabel:
+            id: battery_label
+            text: 'Battery Charge'
+            halign: 'center'
+        MDCircularProgress:
+            id: battery_dial
+            value: 50  # Example starting value
+            max: 100
