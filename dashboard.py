@@ -1,9 +1,9 @@
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.progressbar import MDCircularProgress
+from kivy.clock import Clock
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import BatteryState
+
 
 class MainWidget(BoxLayout):
     def update_battery_dial(self, battery_level):
@@ -11,9 +11,22 @@ class MainWidget(BoxLayout):
 
 class BatteryApp(App):
     def build(self):
-        return MainWidget()
+        return BoxLayout()
 
-class BatterySubscriber(Node):
+    def on_start(self):
+        rclpy.init()
+        self.node = BatteryNode()
+        # Update interval set to 1/60 seconds (or as needed)
+        Clock.schedule_interval(self.update_ros2, 1.0 / 60.0)
+
+    def update_ros2(self, dt):
+        rclpy.spin_once(self.node, timeout_sec=0)
+
+    def on_stop(self):
+        rclpy.shutdown()
+
+
+class BatteryNode(Node):
     def __init__(self, update_func):
         super().__init__('battery_subscriber')
         self.subscription = self.create_subscription(
@@ -27,15 +40,9 @@ class BatterySubscriber(Node):
         battery_level = msg.percentage * 100  # Convert to percentage
         self.update_func(battery_level)
 
-def main(args=None):
-    rclpy.init(args=args)
-    battery_app = BatteryApp()
-    main_widget = battery_app.build()
-    battery_subscriber = BatterySubscriber(main_widget.update_battery_dial)
-    rclpy.spin(battery_subscriber)
-
-    battery_subscriber.destroy_node()
-    rclpy.shutdown()
+def main():
+    app = BatteryApp()
+    app.run()
 
 if __name__ == '__main__':
     main()
